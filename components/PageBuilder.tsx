@@ -5,12 +5,32 @@ import PreviewDialogBtn from "./buttons/PreviewDialogBtn";
 import SavePageBtn from "./buttons/SavePageBtn";
 import PublishPageBtn from "./buttons/PublishPageBtn";
 import Designer from "./Designer";
-import { DndContext } from "@dnd-kit/core";
+import {
+  DndContext,
+  useSensor,
+  useSensors,
+  MouseSensor,
+  TouchSensor,
+} from "@dnd-kit/core";
 import DragOverlayWrapper from "./DragOverlayWrapper";
 
 const PageBuilder = () => {
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 10,
+    },
+  });
+
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 300,
+      tolerance: 5,
+    },
+  });
+
+  const sensors = useSensors(mouseSensor, touchSensor);
   return (
-    <DndContext>
+    <DndContext sensors={sensors}>
       <main className="flex flex-col w-full">
         <div className="flex justify-between border-b-2 p-4 gap-3 items-center">
           <h2 className="truncate font-medium">

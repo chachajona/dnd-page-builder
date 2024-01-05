@@ -10,7 +10,9 @@ export type PageElement = {
     icon: React.ElementType;
     label: string;
   };
-  designerComponent: React.FC;
+  designerComponent: React.FC<{
+    elementInstance: PageElementInstance;
+  }>;
   pageComponent: React.FC;
   propertiesComponent: React.FC;
 };
