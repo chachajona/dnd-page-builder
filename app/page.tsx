@@ -1,6 +1,7 @@
 import React from "react";
 import Logo from "@/components/Logo";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import CreatePageBtn from "@/components/buttons/CreatePageBtn";
 
 export default function Home() {
   return (
@@ -9,6 +10,9 @@ export default function Home() {
         <Logo />
         <ThemeSwitcher />
       </nav>
+      <div className="p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <CreatePageBtn />
+      </div>
     </div>
   );
 }
