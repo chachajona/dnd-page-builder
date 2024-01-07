@@ -19,7 +19,8 @@ import { Button } from "./ui/button";
 import { BiSolidTrash } from "react-icons/bi";
 
 const Designer = () => {
-  const { elements, addElement } = useDesigner();
+  const { elements, addElement, selectedElement, setSelectedElement } =
+    useDesigner();
 
   const droppable = useDroppable({
     id: "designer-drop-area",
@@ -27,8 +28,6 @@ const Designer = () => {
       isDesignerDropArea: true,
     },
   });
-
-  console.log("ELEMENTS", elements);
 
   useDndMonitor({
     onDragEnd(event: DragEndEvent) {
@@ -49,7 +48,12 @@ const Designer = () => {
   return (
     <div className="flex w-full h-full">
       <DesignerSidebar />
-      <div className="p-4 w-full">
+      <div
+        className="p-4 w-full"
+        onClick={() => {
+          if (selectedElement) setSelectedElement(null);
+        }}
+      >
         <div
           ref={droppable.setNodeRef}
           className={cn(
@@ -81,7 +85,7 @@ const Designer = () => {
 };
 
 function DesignerElementWrapper({ element }: { element: PageElementInstance }) {
-  const { removeElement } = useDesigner();
+  const { removeElement, selectedElement, setSelectedElement } = useDesigner();
   const [mouseIsOver, setMouseIsOver] = React.useState<boolean>(false);
   const topHalf = useDroppable({
     id: element.id + "-top",
@@ -110,6 +114,7 @@ function DesignerElementWrapper({ element }: { element: PageElementInstance }) {
     },
   });
 
+  console.log("SELECTED ELEMENT", selectedElement);
   const DesignerElement = PageElements[element.type].designerComponent;
   return (
     <div
@@ -117,6 +122,10 @@ function DesignerElementWrapper({ element }: { element: PageElementInstance }) {
       className="relative h-[120px] flex flex-col text-foreground hover:cursor-pointer rounded-md ring-1 ring-accent ring-inset "
       onMouseEnter={() => setMouseIsOver(true)}
       onMouseLeave={() => setMouseIsOver(false)}
+      onClick={(e) => {
+        e.stopPropagation();
+        setSelectedElement(element);
+      }}
       {...draggable.attributes}
       {...draggable.listeners}
     >
@@ -134,7 +143,10 @@ function DesignerElementWrapper({ element }: { element: PageElementInstance }) {
             <Button
               className="flex justify-center h-full border rounded-md rounded-l-none bg-red-500"
               variant={"outline"}
-              onClick={() => removeElement(element.id)}
+              onClick={(e) => {
+                e.stopPropagation(); //avoid selection of element while deleting
+                removeElement(element.id);
+              }}
             >
               <BiSolidTrash className="h-6 w-6" />
             </Button>

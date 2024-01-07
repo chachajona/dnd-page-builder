@@ -14,7 +14,9 @@ export type PageElement = {
     elementInstance: PageElementInstance;
   }>;
   pageComponent: React.FC;
-  propertiesComponent: React.FC;
+  propertiesComponent: React.FC<{
+    elementInstance: PageElementInstance;
+  }>;
 };
 
 export type PageElementInstance = {
