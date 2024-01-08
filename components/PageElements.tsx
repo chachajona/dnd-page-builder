@@ -1,8 +1,9 @@
 import React from "react";
 import { TextFieldFormElement } from "./fields/TextField";
+import { SelectFieldFormElement } from "./fields/SelectField";
 
-export type ElementsType = "TextField";
-
+export type ElementsType = "TextField" | "SelectField";
+export type SubmitFunction = (key: string, value: string) => void;
 export type PageElement = {
   type: ElementsType;
   construct: (id: string) => PageElementInstance;
@@ -13,10 +14,14 @@ export type PageElement = {
   designerComponent: React.FC<{
     elementInstance: PageElementInstance;
   }>;
-  pageComponent: React.FC;
+  pageComponent: React.FC<{
+    elementInstance: PageElementInstance;
+    submitValue?: SubmitFunction;
+  }>;
   propertiesComponent: React.FC<{
     elementInstance: PageElementInstance;
   }>;
+  validate: (formElement: PageElementInstance, currentValue: string) => boolean;
 };
 
 export type PageElementInstance = {
@@ -30,6 +35,7 @@ type PageElementsType = {
 
 const PageElements: PageElementsType = {
   TextField: TextFieldFormElement,
+  SelectField: SelectFieldFormElement,
 };
 
 export default PageElements;
