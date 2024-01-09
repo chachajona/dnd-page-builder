@@ -17,6 +17,7 @@ import useDesigner from "./hooks/useDesigner";
 import idGenerator from "@/lib/idGenerator";
 import { Button } from "./ui/button";
 import { BiSolidTrash } from "react-icons/bi";
+import JSONPropertiesSidebar from "./sidebar/JSONPropertiesSidebar";
 
 const Designer = () => {
   const {
@@ -160,6 +161,7 @@ const Designer = () => {
           )}
         </div>
       </div>
+      <JSONPropertiesSidebar />
     </div>
   );
 };

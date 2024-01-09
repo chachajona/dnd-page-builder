@@ -1,7 +1,7 @@
 import React from "react";
 import useDesigner from "../hooks/useDesigner";
-import PageElementsSidebar from "../PageElementsSidebar";
-import PropertiesPageSidebar from "../PropertiesPageSidebar";
+import PageElementsSidebar from "./PageElementsSidebar";
+import PropertiesPageSidebar from "./PropertiesPageSidebar";
 
 const DesignerSidebar = () => {
   const { selectedElement } = useDesigner();

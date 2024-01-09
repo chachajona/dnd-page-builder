@@ -1,9 +1,9 @@
 import React from "react";
-import useDesigner from "./hooks/useDesigner";
-import PageElements from "./PageElements";
-import { Button } from "./ui/button";
+import useDesigner from "../hooks/useDesigner";
+import PageElements from "../PageElements";
+import { Button } from "../ui/button";
 import { AiOutlineClose } from "react-icons/ai";
-import { Separator } from "./ui/separator";
+import { Separator } from "../ui/separator";
 
 const PropertiesPageSidebar = () => {
   const { selectedElement, setSelectedElement } = useDesigner();

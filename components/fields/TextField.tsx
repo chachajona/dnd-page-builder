@@ -57,7 +57,7 @@ export const TextFieldFormElement: PageElement = {
   designerComponent: DesignerComponent,
   pageComponent: PageComponent,
   propertiesComponent: PropertiesComponent,
-
+  jsonPropertiesComponent: JSONPropertiesComponent,
   validate: (
     formElement: PageElementInstance,
     currentValue: string
@@ -283,4 +283,15 @@ function PropertiesComponent({
       </form>
     </Form>
   );
+}
+
+function JSONPropertiesComponent({
+  elementInstance,
+}: {
+  elementInstance: PageElementInstance;
+}) {
+  const element = elementInstance as CustomInstance;
+  const { updateElement } = useDesigner();
+
+  return <div>JSON Properties</div>;
 }
