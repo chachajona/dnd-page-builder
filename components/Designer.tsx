@@ -48,6 +48,7 @@ const Designer = () => {
         isDesignerBtnElement && isDroppingOverDesignerDropArea;
 
       // First scenario
+      //If a sidebar button is dropped over a designated drop area, a new element is created based on the type of the button and added to the elements array.
       if (droppingSidebarBtnOverDesignerDropArea) {
         const type = active.data?.current?.type;
         const newElement = PageElements[type as ElementsType].construct(
@@ -72,6 +73,7 @@ const Designer = () => {
         isDesignerBtnElement && isDroppingOverDesignerElement;
 
       // Second scenario
+      //If a sidebar button is dropped over a designer element (either the top half or the bottom half), a new element is created based on the type of the button and inserted at the appropriate index in the elements array.
       if (droppingSidebarBtnOverDesignerElement) {
         const type = active.data?.current?.type;
         const newElement = PageElements[type as ElementsType].construct(
@@ -95,6 +97,7 @@ const Designer = () => {
       }
 
       // Third scenario
+      //If a designer element is being dragged and dropped over another designer element, the active element is moved to the appropriate index in the elements array.
       const isDraggingDesignerElement = active.data?.current?.isDesignerElement;
 
       const draggingDesignerElementOverAnotherDesignerElement =
@@ -210,23 +213,52 @@ function DesignerElementWrapper({ element }: { element: PageElementInstance }) {
             setSelectedElement(element);
           }}
         >
-          <DesignerElement elementInstance={element} />
-          <Button
-            variant={"ghost"}
-            size={"icon"}
-            {...draggable.attributes}
-            {...draggable.listeners}
-            className={` absolute bottom-2 right-2 ${
-              isCursorGrabbing ? "cursor-grabbing" : "cursor-grab"
-            }`}
-          >
-            <svg viewBox="0 0 20 20" width="15">
-              <path
-                d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"
-                fill="currentColor"
-              ></path>
-            </svg>
-          </Button>
+          <div
+            ref={topHalf.setNodeRef}
+            className="absolute w-full h-[10%] rounded-t-md"
+          />
+          <div
+            ref={bottomHalf.setNodeRef}
+            className="absolute w-full bottom-0 h-[10%] rounded-b-md"
+          />
+          {topHalf.isOver && (
+            <div className="absolute top-0 w-full rounded-md h-[7px] bg-primary rounded-b-none" />
+          )}
+          <div>
+            <DesignerElement elementInstance={element} />
+            <div className="flex justify-center items-center gap-0 absolute top-2 right-2">
+              <Button
+                variant={"ghost"}
+                size={"icon"}
+                onClick={(e) => {
+                  e.stopPropagation(); //avoid selection of element while deleting
+                  removeElement(element.id);
+                }}
+                className="group flex justify-center rounded-md group-hover:block hover:bg-red-500 "
+              >
+                <BiSolidTrash />
+              </Button>
+              <Button
+                variant={"ghost"}
+                size={"icon"}
+                {...draggable.attributes}
+                {...draggable.listeners}
+                className={` ${
+                  isCursorGrabbing ? "cursor-grabbing" : "cursor-grab"
+                }`}
+              >
+                <svg viewBox="0 0 20 20" width="15">
+                  <path
+                    d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"
+                    fill="currentColor"
+                  ></path>
+                </svg>
+              </Button>
+            </div>
+          </div>
+          {bottomHalf.isOver && (
+            <div className="absolute bottom-0 w-full rounded-md h-[7px] bg-primary rounded-t-none" />
+          )}
         </div>
       );
     }

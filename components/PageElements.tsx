@@ -22,7 +22,7 @@ export type PageElement = {
   propertiesComponent: React.FC<{
     elementInstance: PageElementInstance;
   }>;
-  jsonPropertiesComponent?: React.FC<{
+  jsonPropertiesComponent: React.FC<{
     elementInstance: PageElementInstance;
   }>;
   validate: (formElement: PageElementInstance, currentValue: string) => boolean;

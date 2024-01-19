@@ -11,6 +11,7 @@ interface ContainerProps {
   id: string;
   children?: React.ReactNode;
   row?: boolean;
+  style?: React.CSSProperties;
 }
 
 export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
@@ -18,9 +19,10 @@ export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
     return (
       <div
         ref={ref}
-        className={`p-5 border-dashed border-2 rounded-sm ${
-          row ? "flex flex-row" : "flex flex-col"
+        className={`w-full p-5 border-dashed border-2 rounded-sm ${
+          row ? "flex flex-row gap-2" : "flex flex-col gap-2"
         }`}
+        {...props}
       >
         {children}
       </div>
@@ -34,12 +36,14 @@ interface SortableContainerProps {
     id: string
   ) => { id: string; container?: boolean; row?: boolean }[];
   children?: React.ReactNode;
+  style?: React.CSSProperties;
 }
 
 export const SortableContainer: React.FC<SortableContainerProps> = ({
   id,
   row,
   getItems,
+  style = {},
 }) => {
   const { isOver, setNodeRef } = useDroppable({
     id: id,
@@ -48,12 +52,15 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
   const itemIds = items.map((item) => item.id);
 
   return (
-    <SortableItem id={id}>
-      <div
+    <SortableItem id={id} handlePosition={row ? "right" : "top"}>
+      <Container
+        id={id}
         ref={setNodeRef}
-        className={`p-5 border-dashed border-2 rounded-sm ${
-          row ? "flex flex-row" : "flex flex-col"
-        } ${isOver ? "bg-gray-300" : ""}`}
+        row={row}
+        style={{
+          ...style,
+          backgroundColor: isOver ? "rgb(241,245,249)" : row ? "rgb(241,245,249)" : "transparent",
+        }}
       >
         <SortableContext
           items={itemIds}
@@ -71,7 +78,7 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
             );
           })}
         </SortableContext>
-      </div>
+      </Container>
     </SortableItem>
   );
 };

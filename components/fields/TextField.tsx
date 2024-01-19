@@ -13,6 +13,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
+import ReactJson from "react-json-view";
 import useDesigner from "../hooks/useDesigner";
 
 import {
@@ -293,5 +294,23 @@ function JSONPropertiesComponent({
   const element = elementInstance as CustomInstance;
   const { updateElement } = useDesigner();
 
-  return <div>JSON Properties</div>;
+  const handleEdit = (editedJson: Record<string, any>) => {
+    updateElement(element.id, {
+      ...element,
+      extraAttributes: editedJson,
+    });
+  };
+  return (
+    <div>
+      <ReactJson
+        src={element.extraAttributes}
+        onEdit={handleEdit}
+        enableClipboard={false}
+        displayDataTypes={false}
+        displayObjectSize={false}
+        iconStyle="circle"
+        style={{ padding: "10px", borderRadius: "4px", background: "#f8f8f8" }}
+      />
+    </div>
+  );
 }

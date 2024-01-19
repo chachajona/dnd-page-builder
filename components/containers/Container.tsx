@@ -162,9 +162,11 @@ function DesignerComponent({
     const { active, over, draggingRect } = event;
     const { id } = active;
     let overId: any;
+
     if (over) {
       overId = over.id;
     }
+
     const overParent = findParent(overId);
     const overIsContainer = isContainer(overId);
     const activeIsContainer = isContainer(String(activeId));
@@ -173,43 +175,38 @@ function DesignerComponent({
       const overIsRow = isRow(overId);
       const activeIsRow = isRow(String(activeId));
 
-      if (overIsRow) {
-        if (activeIsRow) {
-          return;
-        }
+      if (overIsRow && (activeIsRow || !activeIsContainer)) {
+        return;
+      }
 
-        if (!activeIsContainer) {
-          return;
-        }
-      } else if (activeIsContainer) {
+      if (!overIsRow && activeIsContainer) {
         return;
       }
     }
 
     setItems((prevItems) => {
-      const activeIndex = items.findIndex((item) => item.id === id);
-      const overIndex = items.findIndex((item) => item.id === overId);
+      const activeIndex = prevItems.findIndex((item) => item.id === id);
+      const overIndex = prevItems.findIndex((item) => item.id === overId);
 
-      let newIndex = overIndex;
+      if (overIndex === -1) {
+        return prevItems;
+      }
 
       const isBelowLastItem =
         over &&
+        over.rect &&
         overIndex === prevItems.length - 1 &&
         draggingRect.offsetTop > over.rect.offsetTop + over.rect.height;
 
       const modifier = isBelowLastItem ? 1 : 0;
+      const newIndex = overIndex + modifier;
 
-      newIndex = overIndex >= 0 ? overIndex + modifier : prevItems.length + 1;
+      const nextParent = overId && (overIsContainer ? overId : overParent);
 
-      let nextParent;
-      if (overId) {
-        nextParent = overIsContainer ? overId : overParent;
-      }
+      const updatedItems = [...prevItems];
+      updatedItems[activeIndex].parent = nextParent;
 
-      prevItems[activeIndex].parent = nextParent;
-      const nextItems = arrayMove(prevItems, activeIndex, newIndex);
-
-      return nextItems;
+      return arrayMove(updatedItems, activeIndex, newIndex);
     });
   }
 
@@ -236,7 +233,7 @@ function DesignerComponent({
 
   return (
     <div>
-      <Card className="w-full">
+      <Card className="h-full w-full pt-7">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl flex justify-between">
             Columns/Rows

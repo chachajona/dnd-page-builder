@@ -17,6 +17,7 @@ const JSONPropertiesSidebar = () => {
     );
   const JSONPropertiesPage =
     PageElements[selectedElement?.type].jsonPropertiesComponent;
+  
   return (
     <aside className="w-[300px] max-w-[300px] flex flex-col flex-grow gap-2 border-r-2 border-muted p-4 bg-background overflow-y-auto h-full">
       <div className="flex justify-between items-center">
@@ -32,6 +33,7 @@ const JSONPropertiesSidebar = () => {
         </Button>
       </div>
       <Separator className="mb-4" />
+      <JSONPropertiesPage elementInstance={selectedElement} />
     </aside>
   );
 };
