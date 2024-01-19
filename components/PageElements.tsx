@@ -1,8 +1,9 @@
 import React from "react";
 import { TextFieldFormElement } from "./fields/TextField";
 import { SelectFieldFormElement } from "./fields/SelectField";
+import { ContainerPageElement } from "./containers/Container";
 
-export type ElementsType = "TextField" | "SelectField";
+export type ElementsType = "TextField" | "SelectField" | "Container";
 export type SubmitFunction = (key: string, value: string) => void;
 export type PageElement = {
   type: ElementsType;
@@ -39,6 +40,7 @@ type PageElementsType = {
 const PageElements: PageElementsType = {
   TextField: TextFieldFormElement,
   SelectField: SelectFieldFormElement,
+  Container: ContainerPageElement,
 };
 
 export default PageElements;

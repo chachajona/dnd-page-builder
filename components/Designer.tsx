@@ -198,10 +198,43 @@ function DesignerElementWrapper({ element }: { element: PageElementInstance }) {
 
   console.log("SELECTED ELEMENT", selectedElement);
   const DesignerElement = PageElements[element.type].designerComponent;
+  const isCursorGrabbing = draggable.attributes["aria-pressed"];
+  {
+    if (element.type === "Container") {
+      return (
+        <div
+          ref={draggable.setNodeRef}
+          className="relative h-full flex flex-col text-foreground hover:cursor-pointer rounded-md ring-1 ring-accent ring-inset "
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedElement(element);
+          }}
+        >
+          <DesignerElement elementInstance={element} />
+          <Button
+            variant={"ghost"}
+            size={"icon"}
+            {...draggable.attributes}
+            {...draggable.listeners}
+            className={` absolute bottom-2 right-2 ${
+              isCursorGrabbing ? "cursor-grabbing" : "cursor-grab"
+            }`}
+          >
+            <svg viewBox="0 0 20 20" width="15">
+              <path
+                d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"
+                fill="currentColor"
+              ></path>
+            </svg>
+          </Button>
+        </div>
+      );
+    }
+  }
   return (
     <div
       ref={draggable.setNodeRef}
-      className="relative h-[120px] flex flex-col text-foreground hover:cursor-pointer rounded-md ring-1 ring-accent ring-inset "
+      className="relative h-full flex flex-col text-foreground hover:cursor-pointer rounded-md ring-1 ring-accent ring-inset "
       onMouseEnter={() => setMouseIsOver(true)}
       onMouseLeave={() => setMouseIsOver(false)}
       onClick={(e) => {
@@ -245,7 +278,7 @@ function DesignerElementWrapper({ element }: { element: PageElementInstance }) {
       )}
       <div
         className={cn(
-          "flex w-full h-[120px] items-center rounded-md bg-accent/40 px-4 py-2 pointer-events-none opacity-100",
+          "flex w-full h-full items-center rounded-md bg-accent/40 px-4 py-2 pointer-events-none opacity-100",
           mouseIsOver && "opacity-10"
         )}
       >
