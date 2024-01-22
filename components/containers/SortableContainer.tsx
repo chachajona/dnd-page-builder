@@ -1,5 +1,5 @@
 import React from "react";
-import { useDroppable } from "@dnd-kit/core";
+import { DragEndEvent, useDndMonitor, useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -47,7 +47,31 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
 }) => {
   const { isOver, setNodeRef } = useDroppable({
     id: id,
+    data: {
+      isContainerDropArea: true,
+    },
   });
+
+  useDndMonitor({
+    onDragEnd: (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!active || !over) return;
+
+      const isDesignerBtnElement = active.data?.current?.isDesignerBtnElement;
+      const isDroppingOverContainerDropArea =
+        over.data?.current?.isContainerDropArea;
+
+      const droppingSidebarBtnOverDesignerDropArea =
+        isDesignerBtnElement && isDroppingOverContainerDropArea;
+
+      if (droppingSidebarBtnOverDesignerDropArea) {
+        const type = active.data?.current?.type;
+
+        return;
+      }
+    },
+  });
+
   const items = getItems(id);
   const itemIds = items.map((item) => item.id);
 
@@ -59,7 +83,11 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
         row={row}
         style={{
           ...style,
-          backgroundColor: isOver ? "rgb(241,245,249)" : row ? "rgb(241,245,249)" : "transparent",
+          backgroundColor: isOver
+            ? "rgb(241,245,249)"
+            : row
+            ? "rgb(241,245,249)"
+            : "transparent",
         }}
       >
         <SortableContext

@@ -17,6 +17,8 @@ import {
   useSensors,
   UniqueIdentifier,
   DragOverlay,
+  DragEndEvent,
+  DragOverEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -72,7 +74,7 @@ interface Item {
   id: string;
   container?: boolean;
   row?: boolean;
-  parent?: string | null;
+  parent?: string | boolean | null;
 }
 
 function DesignerComponent({
@@ -158,14 +160,12 @@ function DesignerComponent({
     setActiveId(id);
   }
 
-  function handleDragOver(event: any) {
-    const { active, over, draggingRect } = event;
-    const { id } = active;
-    let overId: any;
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event;
+    const id = active.id.toString();
+    const overId = over?.id.toString();
 
-    if (over) {
-      overId = over.id;
-    }
+    if (!overId) return;
 
     const overParent = findParent(overId);
     const overIsContainer = isContainer(overId);
@@ -187,36 +187,37 @@ function DesignerComponent({
     setItems((prevItems) => {
       const activeIndex = prevItems.findIndex((item) => item.id === id);
       const overIndex = prevItems.findIndex((item) => item.id === overId);
+      const activeTop = active.rect.current.translated?.top ?? 0;
 
-      if (overIndex === -1) {
-        return prevItems;
-      }
+      let newIndex = overIndex;
 
       const isBelowLastItem =
         over &&
         over.rect &&
         overIndex === prevItems.length - 1 &&
-        draggingRect.offsetTop > over.rect.offsetTop + over.rect.height;
+        activeTop > over.rect.top + over.rect.height;
 
       const modifier = isBelowLastItem ? 1 : 0;
-      const newIndex = overIndex + modifier;
+      newIndex = overIndex >= 0 ? overIndex + modifier : prevItems.length + 1;
 
-      const nextParent = overId && (overIsContainer ? overId : overParent);
+      let nextParent;
+      if (overId) {
+        nextParent = overId && (overIsContainer ? overId : overParent);
+      }
 
+      prevItems[activeIndex].parent = nextParent;
       const updatedItems = [...prevItems];
-      updatedItems[activeIndex].parent = nextParent;
 
       return arrayMove(updatedItems, activeIndex, newIndex);
     });
   }
 
-  function handleDragEnd(event: any) {
+  function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    const { id } = active;
-    let overId: any;
-    if (over) {
-      overId = over.id;
-    }
+    const id = active.id.toString();
+    const overId = over?.id;
+
+    if (!overId) return;
 
     const activeIndex = items.findIndex((item) => item.id === id);
     const overIndex = items.findIndex((item) => item.id === overId);

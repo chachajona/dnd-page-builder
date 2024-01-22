@@ -17,12 +17,22 @@ export function AddItems({ addNewItem }: AddItemsProps) {
       <PopoverContent className="sm:max-w-[425px]">
         <div className="grid gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">Add Rows or Columns</h4>
+            <h4 className="font-medium leading-none">
+              Add Items or Rows or Columns
+            </h4>
             <p className="text-sm text-muted-foreground">
-              Set the number of rows or columns you want
+              Set the number of items or rows or columns you want
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3">
+            <Button
+              variant={"outline"}
+              className="w-full"
+              onClick={() => addNewItem()}
+            >
+              <Columns2 className="h-6 w-6" />
+              Items
+            </Button>
             <Button
               variant={"outline"}
               className="w-full gap-2"
