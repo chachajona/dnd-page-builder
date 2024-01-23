@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { RxContainer } from "react-icons/rx";
 import {
   ElementsType,
@@ -19,6 +19,7 @@ import {
   DragOverlay,
   DragEndEvent,
   DragOverEvent,
+  DragStartEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -71,10 +72,10 @@ type CustomInstance = PageElementInstance & {
 };
 
 interface Item {
-  id: string;
+  id: UniqueIdentifier;
   container?: boolean;
   row?: boolean;
-  parent?: string | boolean | null;
+  parent?: UniqueIdentifier | false;
 }
 
 function DesignerComponent({
@@ -82,7 +83,7 @@ function DesignerComponent({
 }: {
   elementInstance: PageElementInstance;
 }) {
-  const [activeId, setActiveId] = useState<UniqueIdentifier>();
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [items, setItems] = useState<Item[]>([]);
 
   const sensors = useSensors(
@@ -92,23 +93,26 @@ function DesignerComponent({
     })
   );
 
-  const addItems = (container?: boolean, row?: boolean) => {
-    setItems((prev) => [
-      ...prev,
-      {
-        id: `item-${prev.length + 1}`,
-        container,
-        row,
-      },
-    ]);
-  };
+  const addItems = useCallback(
+    (container?: boolean, row?: boolean) => {
+      setItems((prev) => [
+        ...prev,
+        {
+          id: `item-${prev.length + 1}`,
+          container,
+          row,
+        },
+      ]);
+    },
+    [setItems]
+  );
 
-  function isContainer(id: string) {
+  function isContainer(id: UniqueIdentifier) {
     const item = items.find((item) => item.id === id);
     return !item ? false : item.container;
   }
 
-  function isRow(id: string) {
+  function isRow(id: UniqueIdentifier) {
     const item = items.find((item) => item.id === id);
     return !item ? false : item.row;
   }
@@ -118,7 +122,7 @@ function DesignerComponent({
     return !item ? false : item.parent;
   }
 
-  function getItems(parent?: string) {
+  function getItems(parent?: UniqueIdentifier) {
     return items.filter((item) => {
       if (!parent) {
         return !item.parent;
@@ -127,7 +131,7 @@ function DesignerComponent({
     });
   }
 
-  function getItemIds(parent?: string) {
+  function getItemIds(parent?: UniqueIdentifier) {
     return getItems(parent).map((item) => item.id);
   }
 
@@ -136,13 +140,13 @@ function DesignerComponent({
       return null;
     }
 
-    if (isContainer(String(activeId))) {
+    if (isContainer(activeId)) {
       const item = items.find((i) => i.id === activeId);
 
       if (item) {
         return (
-          <Container id={item?.id} row={item?.row}>
-            {getItems(String(activeId)).map((item) => (
+          <Container row={item?.row}>
+            {getItems(activeId).map((item) => (
               <Item key={item.id} id={item.id} />
             ))}
           </Container>
@@ -153,7 +157,7 @@ function DesignerComponent({
     return <Item id={activeId} />;
   }
 
-  function handleDragStart(event: any) {
+  function handleDragStart(event: DragStartEvent) {
     const { active } = event;
     const { id } = active;
 
@@ -162,8 +166,8 @@ function DesignerComponent({
 
   function handleDragOver(event: DragOverEvent) {
     const { active, over } = event;
-    const id = active.id.toString();
-    const overId = over?.id.toString();
+    const id = active.id;
+    const overId = over?.id;
 
     if (!overId) return;
 
@@ -175,11 +179,15 @@ function DesignerComponent({
       const overIsRow = isRow(overId);
       const activeIsRow = isRow(String(activeId));
 
-      if (overIsRow && (activeIsRow || !activeIsContainer)) {
-        return;
-      }
+      if (overIsRow) {
+        if (activeIsRow) {
+          return;
+        }
 
-      if (!overIsRow && activeIsContainer) {
+        if (!activeIsContainer) {
+          return;
+        }
+      } else if (activeIsContainer) {
         return;
       }
     }
@@ -193,7 +201,6 @@ function DesignerComponent({
 
       const isBelowLastItem =
         over &&
-        over.rect &&
         overIndex === prevItems.length - 1 &&
         activeTop > over.rect.top + over.rect.height;
 
@@ -206,15 +213,14 @@ function DesignerComponent({
       }
 
       prevItems[activeIndex].parent = nextParent;
-      const updatedItems = [...prevItems];
 
-      return arrayMove(updatedItems, activeIndex, newIndex);
+      return arrayMove(prevItems, activeIndex, newIndex);
     });
   }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    const id = active.id.toString();
+    const id = active.id;
     const overId = over?.id;
 
     if (!overId) return;
@@ -230,6 +236,8 @@ function DesignerComponent({
         return nextItems;
       });
     }
+
+    setActiveId(null);
   }
 
   return (
@@ -248,7 +256,6 @@ function DesignerComponent({
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
           >
             <SortableContext
               id="root"

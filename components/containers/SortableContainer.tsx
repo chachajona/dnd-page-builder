@@ -1,5 +1,5 @@
-import React from "react";
-import { DragEndEvent, useDndMonitor, useDroppable } from "@dnd-kit/core";
+import React, { forwardRef, ForwardedRef, useMemo } from "react";
+import { UniqueIdentifier, useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -8,35 +8,37 @@ import {
 import { Item, SortableItem } from "./SortableItem";
 
 interface ContainerProps {
-  id: string;
   children?: React.ReactNode;
   row?: boolean;
   style?: React.CSSProperties;
 }
 
-export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
-  function Container({ children, row, ...props }, ref) {
-    return (
-      <div
-        ref={ref}
-        className={`w-full p-5 border-dashed border-2 rounded-sm ${
-          row ? "flex flex-row gap-2" : "flex flex-col gap-2"
-        }`}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
+export const Container = forwardRef(function Container(
+  props: ContainerProps,
+  ref: ForwardedRef<HTMLDivElement>
+): React.ReactElement {
+  const { row, children, style = {} } = props;
+  return (
+    <div
+      ref={ref}
+      className={`w-full p-[50px] min-h-50 border-dashed border-2 rounded-sm ${
+        row ? "flex flex-row gap-2" : "flex flex-col gap-2"
+      }`}
+      style={{ ...style }}
+    >
+      {children}
+    </div>
+  );
+});
 interface SortableContainerProps {
-  id: string;
+  id: UniqueIdentifier;
   row?: boolean;
   getItems: (
-    id: string
-  ) => { id: string; container?: boolean; row?: boolean }[];
+    id: UniqueIdentifier
+  ) => { id: UniqueIdentifier; container?: boolean; row?: boolean }[];
   children?: React.ReactNode;
   style?: React.CSSProperties;
+  handlePosition?: string;
 }
 
 export const SortableContainer: React.FC<SortableContainerProps> = ({
@@ -44,7 +46,7 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
   row,
   getItems,
   style = {},
-}) => {
+}): React.ReactElement => {
   const { isOver, setNodeRef } = useDroppable({
     id: id,
     data: {
@@ -52,33 +54,12 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
     },
   });
 
-  useDndMonitor({
-    onDragEnd: (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!active || !over) return;
-
-      const isDesignerBtnElement = active.data?.current?.isDesignerBtnElement;
-      const isDroppingOverContainerDropArea =
-        over.data?.current?.isContainerDropArea;
-
-      const droppingSidebarBtnOverDesignerDropArea =
-        isDesignerBtnElement && isDroppingOverContainerDropArea;
-
-      if (droppingSidebarBtnOverDesignerDropArea) {
-        const type = active.data?.current?.type;
-
-        return;
-      }
-    },
-  });
-
-  const items = getItems(id);
-  const itemIds = items.map((item) => item.id);
+  const items = useMemo(() => getItems(id), [getItems, id]);
+  const itemIds = useMemo(() => items.map((item) => item.id), [items]);
 
   return (
-    <SortableItem id={id} handlePosition={row ? "right" : "top"}>
+    <SortableItem id={id} handlePosition="top">
       <Container
-        id={id}
         ref={setNodeRef}
         row={row}
         style={{
@@ -97,11 +78,21 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
           }
         >
           {items.map((item) => {
-            return item.container ? (
-              <Container key={item.id} id={item.id} row={item.row} />
-            ) : (
+            let child = <Item id={item.id} />;
+            if (item.container) {
+              return (
+                <SortableContainer
+                  key={item.id}
+                  id={item.id}
+                  getItems={getItems}
+                  row={item.row}
+                  handlePosition="top"
+                />
+              );
+            }
+            return (
               <SortableItem key={item.id} id={item.id}>
-                <Item id={item.id} />
+                {child}
               </SortableItem>
             );
           })}
