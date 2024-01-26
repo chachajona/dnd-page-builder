@@ -127,6 +127,21 @@ const Designer = () => {
 
         addElement(indexForNewElement, activeElement);
       }
+
+      // Fourth scenario
+      //If a designer element is being dragged and dropped over the designer element container drop area, the active element is moved to the appropriate index in the elements array.
+      const isDroppingOverContainerDropArea =
+        over.data?.current?.isContainerDropArea;
+
+      const draggingDesignerElementOverContainerDropArea =
+        isDroppingOverContainerDropArea && isDraggingDesignerElement;
+
+      if (draggingDesignerElementOverContainerDropArea) {
+        const activeId = active.data?.current?.elementId;
+        const overId = over.data?.current?.elementId;
+
+        
+      }
     },
   });
   return (

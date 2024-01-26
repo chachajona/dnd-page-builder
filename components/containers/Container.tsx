@@ -28,10 +28,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
-  restrictToVerticalAxis,
-  restrictToParentElement,
-} from "@dnd-kit/modifiers";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -41,6 +37,8 @@ import {
 import { AddItems } from "./AddItems";
 import { Container, SortableContainer } from "./SortableContainer";
 import { Item, SortableItem } from "./SortableItem";
+import ReactJson from "react-json-view";
+import useDesigner from "../hooks/useDesigner";
 
 const type: ElementsType = "Container";
 
@@ -83,8 +81,12 @@ function DesignerComponent({
 }: {
   elementInstance: PageElementInstance;
 }) {
+  const element = elementInstance as CustomInstance;
+
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [items, setItems] = useState<Item[]>([]);
+
+  const { label, children } = element.extraAttributes;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -245,7 +247,7 @@ function DesignerComponent({
       <Card className="h-full w-full pt-7">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl flex justify-between">
-            Columns/Rows
+            {label}
             <AddItems addNewItem={addItems} />
           </CardTitle>
         </CardHeader>
@@ -304,5 +306,31 @@ function PropertiesComponent({
 }: {
   elementInstance: PageElementInstance;
 }) {
-  return <></>;
+  const element = elementInstance as CustomInstance;
+  const { updateElement } = useDesigner();
+
+  const handleEdit = (editedJson: Record<string, any>) => {
+    updateElement(element.id, {
+      ...element,
+      extraAttributes: editedJson,
+    });
+  };
+
+  return (
+    <div>
+      <ReactJson
+        src={element.extraAttributes}
+        onEdit={handleEdit}
+        enableClipboard={false}
+        displayDataTypes={false}
+        displayObjectSize={false}
+        iconStyle="circle"
+        style={{
+          padding: "10px",
+          borderRadius: "4px",
+          background: "#f8f8f8",
+        }}
+      />
+    </div>
+  );
 }
