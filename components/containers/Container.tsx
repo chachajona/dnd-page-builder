@@ -311,18 +311,23 @@ function PropertiesComponent({
   const element = elementInstance as CustomInstance;
   const { updateElement } = useDesigner();
 
-  const handleEdit = (editedJson: Record<string, any>) => {
-    updateElement(element.id, {
-      ...element,
-      extraAttributes: editedJson,
-    });
-  };
+  const handleEdit = useCallback(
+    (editedJson: Record<string, any>) => {
+      updateElement(element.id, {
+        ...element,
+        extraAttributes: editedJson,
+      });
+    },
+    [element, updateElement]
+  );
 
   return (
     <div>
       <ReactJson
         src={element.extraAttributes}
-        onEdit={handleEdit}
+        onEdit={(e) => {
+          handleEdit(e.updated_src);
+        }}
         enableClipboard={false}
         displayDataTypes={false}
         displayObjectSize={false}
