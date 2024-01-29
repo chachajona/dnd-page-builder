@@ -7,6 +7,8 @@ import {
 } from "@dnd-kit/sortable";
 import { Item, SortableItem } from "./SortableItem";
 
+
+
 interface ContainerProps {
   children?: React.ReactNode;
   row?: boolean;
@@ -47,7 +49,7 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
   getItems,
   style = {},
 }): React.ReactElement => {
-  const { isOver, setNodeRef } = useDroppable({
+  const containerDroppable = useDroppable({
     id: id,
     data: {
       isContainerDropArea: true,
@@ -60,11 +62,11 @@ export const SortableContainer: React.FC<SortableContainerProps> = ({
   return (
     <SortableItem id={id} handlePosition="top">
       <Container
-        ref={setNodeRef}
+        ref={containerDroppable.setNodeRef}
         row={row}
         style={{
           ...style,
-          backgroundColor: isOver
+          backgroundColor: containerDroppable.isOver
             ? "rgb(241,245,249)"
             : row
             ? "rgb(241,245,249)"

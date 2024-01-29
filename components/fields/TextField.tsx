@@ -13,7 +13,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import ReactJson from "react-json-view";
+import dynamic from "next/dynamic";
+const ReactJson = dynamic(() => import("react-json-view"), { ssr: false });
 import useDesigner from "../hooks/useDesigner";
 
 import {

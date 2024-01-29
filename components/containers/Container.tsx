@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { RxContainer } from "react-icons/rx";
 import {
   ElementsType,
@@ -37,14 +37,15 @@ import {
 import { AddItems } from "./AddItems";
 import { Container, SortableContainer } from "./SortableContainer";
 import { Item, SortableItem } from "./SortableItem";
-import ReactJson from "react-json-view";
+import dynamic from "next/dynamic";
+const ReactJson = dynamic(() => import("react-json-view"), { ssr: false });
 import useDesigner from "../hooks/useDesigner";
 
 const type: ElementsType = "Container";
 
 const extraAttributes = {
   label: "Container",
-  children: [],
+  children: [] as Item[],
 };
 
 export const ContainerPageElement: PageElement = {
@@ -97,16 +98,17 @@ function DesignerComponent({
 
   const addItems = useCallback(
     (container?: boolean, row?: boolean) => {
-      setItems((prev) => [
-        ...prev,
-        {
-          id: `item-${prev.length + 1}`,
-          container,
-          row,
-        },
-      ]);
+      const newItem = {
+        id: `item-${items.length + 1}`,
+        container,
+        row,
+      };
+
+      setItems((prev) => [...prev, newItem]);
+
+      element.extraAttributes.children = [...(children || []), newItem];
     },
-    [setItems]
+    [setItems, children, element.extraAttributes, items.length]
   );
 
   function isContainer(id: UniqueIdentifier) {
