@@ -2,8 +2,15 @@ import React from "react";
 import { TextFieldFormElement } from "./fields/TextField";
 import { SelectFieldFormElement } from "./fields/SelectField";
 import { ContainerPageElement } from "./containers/Container";
+import { ColumnPageElement } from "./containers/Column";
+import { RowPageElement } from "./containers/Row";
 
-export type ElementsType = "TextField" | "SelectField" | "Container";
+export type ElementsType =
+  | "TextField"
+  | "SelectField"
+  | "Container"
+  | "Column"
+  | "Row";
 export type SubmitFunction = (key: string, value: string) => void;
 export type PageElement = {
   type: ElementsType;
@@ -41,6 +48,8 @@ const PageElements: PageElementsType = {
   TextField: TextFieldFormElement,
   SelectField: SelectFieldFormElement,
   Container: ContainerPageElement,
+  Column: ColumnPageElement,
+  Row: RowPageElement,
 };
 
 export default PageElements;

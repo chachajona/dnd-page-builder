@@ -140,7 +140,36 @@ const Designer = () => {
         const activeId = active.data?.current?.elementId;
         const overId = over.data?.current?.elementId;
 
-        
+        // Get the active element and move it to the container children array
+        const activeElementIndex = elements.findIndex(
+          (el) => el.id === activeId
+        );
+
+        const overElementIndex = elements.findIndex((el) => el.id === overId);
+
+        if (activeElementIndex === -1 || overElementIndex === -1) {
+          throw new Error("element not found");
+        }
+
+        const activeElement = { ...elements[activeElementIndex] };
+        removeElement(activeId);
+
+        if (elements[overElementIndex]) {
+          const updatedOverElement = {
+            ...elements[overElementIndex],
+            extraAttributes: {
+              ...(elements[overElementIndex].extraAttributes || {}),
+              children: [
+                ...(elements[overElementIndex].extraAttributes?.children || []),
+                activeElement.extraAttributes,
+              ],
+            },
+          };
+
+          // Add the updated over element to the elements array
+          addElement(overElementIndex, updatedOverElement);
+          return;
+        }
       }
     },
   });

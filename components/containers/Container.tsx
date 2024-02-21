@@ -62,7 +62,7 @@ export const ContainerPageElement: PageElement = {
   designerComponent: DesignerComponent,
   pageComponent: PageComponent,
   propertiesComponent: PropertiesComponent,
-  jsonPropertiesComponent: PropertiesComponent,
+  jsonPropertiesComponent: JSONPropertiesComponent,
   validate: () => true,
 };
 
@@ -304,6 +304,14 @@ function PageComponent({
 }
 
 function PropertiesComponent({
+  elementInstance,
+}: {
+  elementInstance: PageElementInstance;
+}) {
+  return <></>;
+}
+
+function JSONPropertiesComponent({
   elementInstance,
 }: {
   elementInstance: PageElementInstance;
