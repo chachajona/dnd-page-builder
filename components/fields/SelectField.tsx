@@ -48,6 +48,7 @@ const extraAttributes = {
   required: false,
   placeHolder: "Value here...",
   options: [],
+  containerId: "",
 };
 
 const propertiesSchema = z.object({

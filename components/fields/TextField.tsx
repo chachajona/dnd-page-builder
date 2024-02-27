@@ -36,6 +36,7 @@ const extraAttributes = {
   helperText: "Helper text",
   required: false,
   placeHolder: "Value here...",
+  containerId: "",
 };
 
 const propertiesSchema = z.object({

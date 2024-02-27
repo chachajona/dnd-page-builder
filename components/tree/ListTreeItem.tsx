@@ -21,10 +21,6 @@ const ListTreeItem = () => {
       <p className="text-sm text-muted-foreground col-span-1 md:col-span-2 my-2 place-self-start">
         Container elements
       </p>
-      <TreeItemBtn
-        pageElement={PageElements.Container}
-        addElement={addElement}
-      />
       <TreeItemBtn pageElement={PageElements.Column} addElement={addElement} />
       <TreeItemBtn pageElement={PageElements.Row} addElement={addElement} />
     </div>
