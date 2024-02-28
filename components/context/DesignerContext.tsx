@@ -6,6 +6,7 @@ import { UniqueIdentifier } from "@dnd-kit/core";
 
 type DesignerContextType = {
   elements: PageElementInstance[];
+  setElements: Dispatch<SetStateAction<PageElementInstance[]>>;
   addElement: (index: number, element: PageElementInstance) => void;
   removeElement: (id: UniqueIdentifier) => void;
   selectedElement: PageElementInstance | null;
@@ -50,6 +51,7 @@ const DesignerContextProvider = ({
     <DesignerContext.Provider
       value={{
         elements,
+        setElements,
         addElement,
         removeElement,
         selectedElement,

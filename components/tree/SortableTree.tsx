@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import JSONPropertiesSidebar from "../sidebar/JSONPropertiesSidebar";
 import useDesigner from "../hooks/useDesigner";
 //DnD
@@ -55,7 +61,7 @@ const SortableTree = ({
   collisionDetection = closestCenter,
   items: initialItems,
 }: Props) => {
-  const { elements } = useDesigner();
+  const { elements, updateElement, addElement, setElements } = useDesigner();
   // Maintain state for each container and the items they contain
   const [items, setItems] = useState<
     Record<UniqueIdentifier, UniqueIdentifier[]>
@@ -63,14 +69,28 @@ const SortableTree = ({
     root: [] as UniqueIdentifier[],
   });
 
-  console.log(items.root);
+  const itemsId = useMemo(() => [...items.root], [items]);
 
-  const itemsId = useMemo(
-    () => elements.map((element) => element.id),
-    [elements]
-  );
+  const prevItemsRoot = useRef<UniqueIdentifier[]>(items.root);
 
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+
+  const updateElements = useCallback(
+    (sortedRootItems: UniqueIdentifier[]) => {
+      const newElements = sortedRootItems
+        .map((itemId) => {
+          const element = elements.find((el) => el.id === itemId);
+          if (element) {
+            return element;
+          }
+          return null;
+        })
+        .filter(Boolean) as PageElementInstance[];
+      // Update elements state with the new order
+      setElements(newElements);
+    },
+    [elements, setElements]
+  );
 
   useEffect(() => {
     const initialItemsState: Record<UniqueIdentifier, UniqueIdentifier[]> = {
@@ -89,6 +109,13 @@ const SortableTree = ({
           initialItemsState[parentContainerId].push(id);
         } else if (parentContainerId === "root" || parentContainerId === "") {
           initialItemsState["root"].push(id);
+          updateElement(id, {
+            ...element,
+            extraAttributes: {
+              ...extraAttributes,
+              containerId: "root",
+            },
+          });
         }
 
         initialItemsState[id] = [];
@@ -100,18 +127,32 @@ const SortableTree = ({
         }
       }
 
-      if (element.type === "TextField" || element.type === "SelectField") {
+      if (type === "TextField" || type === "SelectField") {
         const parentContainerId = containerId;
         if (parentContainerId && initialItemsState[parentContainerId]) {
           initialItemsState[parentContainerId].push(id);
         } else if (parentContainerId === "root" || parentContainerId === "") {
           initialItemsState["root"].push(id);
+          updateElement(id, {
+            ...element,
+            extraAttributes: {
+              ...extraAttributes,
+              containerId: "root",
+            },
+          });
         }
       }
     });
 
     setItems(initialItemsState);
-  }, [elements]);
+  }, [elements, updateElement]);
+
+  useEffect(() => {
+    if (JSON.stringify(items.root) !== JSON.stringify(prevItemsRoot.current)) {
+      updateElements(items.root);
+      prevItemsRoot.current = items.root;
+    }
+  }, [items.root, updateElements]);
 
   // Use the defined sensors for drag and drop operation
   const sensor = useSensors(
@@ -134,37 +175,30 @@ const SortableTree = ({
     })
   );
 
-  const getIndex = (id: UniqueIdentifier, containerId: UniqueIdentifier) => {
-    const containerItems = items[containerId];
-    if (!containerItems) {
+  const findContainer = (id: UniqueIdentifier) => {
+    if (id in items) {
+      return id;
+    }
+
+    return Object.keys(items).find((key) => items[key].includes(id));
+  };
+
+  const getIndex = (id: UniqueIdentifier) => {
+    const container = findContainer(id);
+    if (!container) {
       // Handle the case where containerItems is undefined
       return -1;
     }
 
-    const index = containerItems.indexOf(id);
+    const index = items[container].indexOf(id);
     return index;
   };
 
-  function updateContainerId(
-    elementId: UniqueIdentifier,
-    newContainerId: UniqueIdentifier
-  ) {
-    setItems((prevItems) => {
-      const updatedItems = { ...prevItems };
-      Object.keys(updatedItems).forEach((containerId) => {
-        updatedItems[containerId] = updatedItems[containerId].filter(
-          (id) => id !== elementId
-        );
-      });
-
-      if (updatedItems[newContainerId]) {
-        updatedItems[newContainerId].push(elementId);
-      } else {
-        updatedItems.root.push(elementId);
-      }
-
-      return updatedItems;
-    });
+  function getContainerId(itemId: UniqueIdentifier): UniqueIdentifier {
+    const container = elements.find((element) =>
+      element.extraAttributes?.containerId?.includes(itemId)
+    );
+    return container?.id || "root";
   }
 
   function onDragStart(event: DragStartEvent) {
@@ -180,52 +214,36 @@ const SortableTree = ({
 
     if (!overId) return;
 
-    const activeIndex = getIndex(id, active.data.current?.containerId);
-    const overIndex = getIndex(overId, over.data.current?.containerId);
+    const activeIndex = getIndex(id);
+    const overIndex = getIndex(overId);
 
-    let newIndex = overIndex >= 0 ? overIndex : 0;
+    const activeContainerId = getContainerId(id);
+    const overContainerId = getContainerId(overId);
 
-    const activeContainerId = elements.find((element) =>
-      element.extraAttributes?.containerId?.includes(id)
-    )?.id;
-    const overContainerId = elements.find((element) =>
-      element.extraAttributes?.containerId?.includes(overId)
-    )?.id;
+    setItems((prevItems) => {
+      const updatedItems = { ...prevItems };
 
-    if (
-      activeContainerId &&
-      overContainerId &&
-      activeContainerId === overContainerId
-    ) {
-      // Moving items within the same container
-      setItems((prevItems) => {
-        const updatedItems = { ...prevItems };
+      if (activeContainerId === overContainerId) {
+        // Moving items within the same container
         updatedItems[activeContainerId] = arrayMove(
           updatedItems[activeContainerId],
           activeIndex,
           overIndex
         );
-        return updatedItems;
-      });
-    } else if (
-      activeContainerId &&
-      overContainerId &&
-      activeContainerId !== overContainerId
-    ) {
-      // Moving items between different containers
-      setItems((prevItems) => {
-        const updatedItems = { ...prevItems };
+      } else {
+        // Moving items between different containers
         updatedItems[activeContainerId] = updatedItems[
           activeContainerId
-        ].filter((item) => item !== active.id);
+        ].filter((item) => item !== id);
         updatedItems[overContainerId] = [
           ...updatedItems[overContainerId].slice(0, overIndex),
-          active.id,
+          id,
           ...updatedItems[overContainerId].slice(overIndex),
         ];
-        return updatedItems;
-      });
-    }
+      }
+
+      return updatedItems;
+    });
   }
 
   function onDragCancel(event: DragCancelEvent) {
@@ -241,8 +259,8 @@ const SortableTree = ({
     if (!active || !over) {
       return;
     }
-    const activeIndex = getIndex(active.id, active.data.current?.containerId);
-    const overIndex = getIndex(over.id, over.data.current?.containerId);
+    const activeIndex = getIndex(active.id);
+    const overIndex = getIndex(over.id);
 
     if (activeIndex !== overIndex) {
       setActiveId(over.id);
@@ -261,7 +279,12 @@ const SortableTree = ({
         activeElement.type === "SelectField"
       ) {
         return (
-          <SortableItem key={activeId} id={activeId} element={activeElement} />
+          <SortableItem
+            key={activeId}
+            id={activeId}
+            element={activeElement}
+            containerId={getContainerId(activeId)}
+          />
         );
       }
 
@@ -278,6 +301,7 @@ const SortableTree = ({
             id={activeId}
             element={activeElement}
             items={children}
+            containerId={getContainerId(activeId)}
           />
         );
       }
@@ -352,7 +376,9 @@ const SortableTree = ({
                       return renderElement(childElement);
                     })}
                   </SortableContext>
-                  <DragOverlay>{activeId && getDragOverlay()}</DragOverlay>
+                  <DragOverlay>
+                    {activeId ? getDragOverlay() : null}
+                  </DragOverlay>
                 </div>
               )}
               <div className="flex justify-center items-center h-[120px] rounded-md bg-transparent border-dashed border-2">
@@ -452,10 +478,12 @@ function SortableContainer({
   id,
   element,
   items,
+  containerId,
 }: {
   id: UniqueIdentifier;
   element: PageElementInstance;
   items: React.ReactNode[] | null;
+  containerId?: UniqueIdentifier;
 }) {
   const { removeElement, setSelectedElement } = useDesigner();
   const DesignerElement = PageElements[element.type].designerComponent;
