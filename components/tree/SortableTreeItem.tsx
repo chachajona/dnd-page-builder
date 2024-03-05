@@ -29,14 +29,16 @@ export const SortableTreeItem: FC<{
   const style = {
     // Use Translate instead of Transform if overlay is disabled
     // transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.4 : undefined,
+    opacity: isDragging ? 0.5 : 1,
     transform: CSS.Transform.toString(transform),
     transition,
+    // Prevent text selection during drag
+    userSelect: "none" as "none",
   };
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TreeItem id={id} />
+      {/* <TreeItem id={id} /> */}
       {children}
     </div>
   );

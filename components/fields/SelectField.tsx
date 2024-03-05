@@ -209,6 +209,7 @@ function PropertiesComponent({
     updateElement(element.id, {
       ...element,
       extraAttributes: {
+        ...element.extraAttributes,
         label,
         helperText,
         placeHolder,

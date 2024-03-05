@@ -8,21 +8,19 @@ import {
   PageElement,
   PageElementInstance,
 } from "../PageElements";
-import { UniqueIdentifier, useDroppable } from "@dnd-kit/core";
 import {
-  AnimateLayoutChanges,
-  arrayMove,
-  defaultAnimateLayoutChanges,
+  DragEndEvent,
+  UniqueIdentifier,
+  useDndMonitor,
+  useDroppable,
+} from "@dnd-kit/core";
+import {
   SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { SortableItem, Item } from "./SortableItem";
-import { Container } from "./SortableContainer";
+import { TreeContainer } from "../tree/SortableTreeContainer";
 import useDesigner from "../hooks/useDesigner";
+import { SortableTreeItem, TreeItem } from "../tree/SortableTreeItem";
 
 const type: ElementsType = "Column";
 
@@ -54,61 +52,76 @@ type CustomInstance = PageElementInstance & {
   extraAttributes: typeof extraAttributes;
 };
 
-interface Items {
-  id: UniqueIdentifier;
-}
-
 function DesignerComponent({
   elementInstance,
 }: {
   elementInstance: PageElementInstance;
 }) {
-  const { elements } = useDesigner();
+  const { elements, updateElement } = useDesigner();
   const element = elementInstance as CustomInstance;
-  const { label, children } = element.extraAttributes;
+  const { children } = element.extraAttributes;
 
   const containerDroppable = useDroppable({
     id: element.id,
     data: {
       type: element.type,
-      accept: ["Row", "TextField", "SelectField"],
+      accepts: ["Row", "TextField", "SelectField"],
       children,
+      isContainerDroppableArea: true,
     },
   });
 
   const items = useMemo(
     () =>
       children
-        .map((childId: UniqueIdentifier) =>
-          elements
-            .filter((el) => el.id === childId)
-            .find(
-              (element) =>
-                element.type === "Row" ||
-                element.type === "TextField" ||
-                element.type === "SelectField"
-            )
-        )
-        .filter((item): item is PageElementInstance => item !== undefined),
+        .map((childId) => elements.find((el) => el.id === childId))
+        .filter(Boolean) as PageElementInstance[],
     [children, elements]
   );
 
-  const itemIds = useMemo(
-    () => items.map((item) => item.id),
-    [items]
-  ) as UniqueIdentifier[];
+  const itemIds = useMemo(() => items.map((item) => item.id), [items]);
+
+  useDndMonitor({
+    onDragEnd(event: DragEndEvent) {
+      const { active, over } = event;
+      if (!active || !over) return;
+
+      const activeId = active.id as UniqueIdentifier;
+      const overId = over.data.current?.id;
+
+      if (
+        overId === element.id &&
+        !element.extraAttributes.children.includes(activeId)
+      ) {
+        const newChildren = [...element.extraAttributes.children, activeId];
+        updateElement(element.id, {
+          ...element,
+          extraAttributes: {
+            ...element.extraAttributes,
+            children: newChildren,
+          },
+        });
+      }
+    },
+  });
 
   return (
-    <SortableItem id={element.id}>
-      <Container ref={containerDroppable.setNodeRef}>
+    <SortableTreeItem id={element.id}>
+      <TreeContainer
+        ref={containerDroppable.setNodeRef}
+        row={false}
+        style={{
+          backgroundColor: "transparent",
+        }}
+      >
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
           {items.map((item) => (
-            <SortableItem key={item?.id} id={item?.id}>
-              <Item id={item?.id} />
-            </SortableItem>
+            <SortableTreeItem key={item?.id} id={item?.id}>
+              <TreeItem id={item?.id} />
+            </SortableTreeItem>
           ))}
         </SortableContext>
-      </Container>
-    </SortableItem>
+      </TreeContainer>
+    </SortableTreeItem>
   );
 }

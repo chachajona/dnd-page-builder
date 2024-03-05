@@ -194,20 +194,99 @@ const SortableTree = ({
     return index;
   };
 
-  function getContainerId(itemId: UniqueIdentifier): UniqueIdentifier {
-    const container = elements.find((element) =>
-      element.extraAttributes?.containerId?.includes(itemId)
-    );
-    return container?.id || "root";
+  const getContainerId = useCallback(
+    function getContainerId(itemId: UniqueIdentifier) {
+      const container = elements.find((element) =>
+        element.extraAttributes?.containerId?.includes(itemId)
+      );
+      return container?.id || "root";
+    },
+    [elements]
+  );
+
+  function updateContainerId(id: UniqueIdentifier, newId: UniqueIdentifier) {
+    updateElement(id, {
+      ...elements.find((element) => element.id === id)!,
+      extraAttributes: {
+        ...elements.find((element) => element.id === id)!.extraAttributes,
+        containerId: newId,
+      },
+    });
+
+    setItems((prev) => ({
+      ...prev,
+      [newId]: [...(prev[newId] || []), id],
+    }));
   }
 
+  //Function called when a drag operation starts
   function onDragStart(event: DragStartEvent) {
     const { active } = event;
     const { id } = active;
     setActiveId(id);
   }
 
+  //Function called when a drag operation ends
   function onDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    const id = active.id;
+    const overId = over?.id;
+
+    if (!overId) {
+      setActiveId(null);
+      return;
+    }
+
+    const activeIndex = getIndex(id);
+    const overIndex = getIndex(overId);
+
+    const activeContainerId = getContainerId(id);
+    const overContainerId = getContainerId(overId);
+
+    // Move the activeId to the new position in the state.
+    setItems((prevItems) => {
+      const newItems = { ...prevItems };
+      // Remove from the previous container.
+      newItems[activeContainerId] = newItems[activeContainerId].filter(
+        (item) => item !== id
+      );
+
+      // Insert into the new container at the correct index.
+      const startOfOverItems = newItems[overContainerId].slice(0, overIndex);
+      const endOfOverItems = newItems[overContainerId].slice(overIndex);
+      newItems[overContainerId] = [...startOfOverItems, id, ...endOfOverItems];
+
+      return newItems;
+    });
+
+    // Update container ID after move if needed.
+    if (activeContainerId !== overContainerId) {
+      const elementToUpdate = elements.find((el) => el.id === id);
+      if (elementToUpdate) {
+        updateElement(id, {
+          ...elementToUpdate,
+          extraAttributes: {
+            ...(elementToUpdate.extraAttributes || {}),
+            containerId: overContainerId,
+          },
+        });
+      }
+    }
+
+    setActiveId(null); //Clear the active id when the drag operation ends
+  }
+
+  //Function called when a drag operation is cancelled
+  function onDragCancel(event: DragCancelEvent) {
+    const { active } = event;
+    if (!active) {
+      return;
+    }
+    setActiveId(null); //Clear the active id when the drag operation is cancelled
+  }
+
+  //Function called when a drag operation is over
+  function onDragOver(event: DragOverEvent) {
     const { active, over } = event;
     const id = active.id;
     const overId = over?.id;
@@ -220,51 +299,77 @@ const SortableTree = ({
     const activeContainerId = getContainerId(id);
     const overContainerId = getContainerId(overId);
 
+    if (activeContainerId !== overContainerId) {
+      updateContainerId(id, overContainerId);
+    }
+
+    if (items[id] && activeContainerId !== overContainerId) {
+      setItems((prevItems) => {
+        const updatedItems = { ...prevItems };
+        updatedItems[overId] = updatedItems[overId] || [];
+
+        // Remove the active container's children from the active container
+        updatedItems[id].forEach((childId) => {
+          updatedItems[overId].push(childId);
+        });
+
+        // Update the parent property of the active container's children
+        updatedItems[id] = [];
+
+        return updatedItems;
+      });
+    }
+
+    const activeElement = elements.find((element) => element.id === activeId);
+    const overElement = elements.find((element) => element.id === overId);
+
+    const activeIsContainer =
+      activeElement?.type === "Column" || activeElement?.type === "Row";
+    const overIsContainer =
+      overElement?.type === "Column" || overElement?.type === "Row";
+
+    if (activeIsContainer) {
+      const overIsRow = overElement?.type === "Row";
+      const activeIsRow = activeElement?.type === "Row";
+
+      if (overIsRow) {
+        if (activeIsRow) {
+          return;
+        }
+
+        if (!activeIsContainer) {
+          return;
+        }
+      } else if (activeIsContainer) {
+        return;
+      }
+    }
+
+    let newIndex = overIndex;
+
+    // If both active and over elements are containers, do not change the index
+    if (activeIsContainer && overIsContainer) {
+      newIndex = activeIndex;
+    } else if (activeIsContainer && !overIsContainer) {
+      // If active is container but over is not, place active before the over element
+      newIndex = overIndex;
+    } else if (!activeIsContainer && overIsContainer) {
+      // If active is not container but over is, place active after the over element
+      newIndex = overIndex + 1;
+    } else {
+      // If both active and over elements are not containers, place active before the over element
+      newIndex = overIndex;
+    }
+
     setItems((prevItems) => {
       const updatedItems = { ...prevItems };
-
-      if (activeContainerId === overContainerId) {
-        // Moving items within the same container
-        updatedItems[activeContainerId] = arrayMove(
-          updatedItems[activeContainerId],
-          activeIndex,
-          overIndex
-        );
-      } else {
-        // Moving items between different containers
-        updatedItems[activeContainerId] = updatedItems[
-          activeContainerId
-        ].filter((item) => item !== id);
-        updatedItems[overContainerId] = [
-          ...updatedItems[overContainerId].slice(0, overIndex),
-          id,
-          ...updatedItems[overContainerId].slice(overIndex),
-        ];
-      }
-
+      updatedItems[activeContainerId] = arrayMove(
+        updatedItems[activeContainerId],
+        activeIndex,
+        newIndex
+      );
       return updatedItems;
     });
-  }
-
-  function onDragCancel(event: DragCancelEvent) {
-    const { active } = event;
-    if (!active) {
-      return;
-    }
-    setActiveId(null);
-  }
-
-  function onDragOver(event: DragOverEvent) {
-    const { active, over } = event;
-    if (!active || !over) {
-      return;
-    }
-    const activeIndex = getIndex(active.id);
-    const overIndex = getIndex(over.id);
-
-    if (activeIndex !== overIndex) {
-      setActiveId(over.id);
-    }
   }
 
   function getDragOverlay() {
@@ -284,6 +389,7 @@ const SortableTree = ({
             id={activeId}
             element={activeElement}
             containerId={getContainerId(activeId)}
+            animateLayoutChanges={animateLayoutChanges}
           />
         );
       }
@@ -302,6 +408,7 @@ const SortableTree = ({
             element={activeElement}
             items={children}
             containerId={getContainerId(activeId)}
+            animateLayoutChanges={animateLayoutChanges}
           />
         );
       }
@@ -320,6 +427,7 @@ const SortableTree = ({
             id={id}
             element={element}
             containerId={containerId}
+            animateLayoutChanges={animateLayoutChanges}
           />
         );
       }
@@ -338,14 +446,25 @@ const SortableTree = ({
             id={id}
             element={element}
             items={children}
+            containerId={getContainerId(id)}
+            animateLayoutChanges={animateLayoutChanges}
           />
         );
       }
 
       return null;
     },
-    [items, elements]
+    [items, elements, getContainerId]
   );
+
+  const animateLayoutChanges: AnimateLayoutChanges = (args) =>
+    defaultAnimateLayoutChanges({ ...args, wasDragging: true });
+
+  const dropAnimation: DropAnimation = {
+    ...defaultDropAnimationSideEffects,
+    duration: 250,
+    easing: "ease-out",
+  };
 
   return (
     <DndContext
@@ -376,7 +495,7 @@ const SortableTree = ({
                       return renderElement(childElement);
                     })}
                   </SortableContext>
-                  <DragOverlay>
+                  <DragOverlay dropAnimation={dropAnimation}>
                     {activeId ? getDragOverlay() : null}
                   </DragOverlay>
                 </div>
@@ -400,10 +519,12 @@ function SortableItem({
   element,
   id,
   containerId,
+  animateLayoutChanges,
 }: {
   element: PageElementInstance;
   id: UniqueIdentifier;
   containerId?: UniqueIdentifier;
+  animateLayoutChanges: AnimateLayoutChanges;
 }) {
   const { removeElement, setSelectedElement } = useDesigner();
   const DesignerElement = PageElements[element.type].designerComponent;
@@ -479,11 +600,13 @@ function SortableContainer({
   element,
   items,
   containerId,
+  animateLayoutChanges,
 }: {
   id: UniqueIdentifier;
   element: PageElementInstance;
   items: React.ReactNode[] | null;
   containerId?: UniqueIdentifier;
+  animateLayoutChanges: AnimateLayoutChanges;
 }) {
   const { removeElement, setSelectedElement } = useDesigner();
   const DesignerElement = PageElements[element.type].designerComponent;

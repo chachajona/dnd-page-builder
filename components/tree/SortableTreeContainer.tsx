@@ -59,24 +59,25 @@ const SortableTreeContainer: React.FC<SortableTreeContainerProps> = ({
       row={row}
       style={{
         ...style,
-        backgroundColor: row ? "rgb(241,245,249)" : "transparent",
       }}
     >
       <SortableContext
         items={itemIds}
         strategy={
-          row ? verticalListSortingStrategy : horizontalListSortingStrategy
+          row ? horizontalListSortingStrategy : verticalListSortingStrategy
         }
         id={String(id)}
       >
         {items.map((item) => {
           if (item.container) {
-            <SortableTreeContainer
-              key={item.id}
-              id={item.id}
-              getItems={getItems}
-              row={item.row}
-            />;
+            return (
+              <SortableTreeContainer
+                key={item.id}
+                id={item.id}
+                getItems={getItems}
+                row={item.row}
+              />
+            );
           }
           return (
             <SortableTreeItem key={item.id} id={item.id}>

@@ -28,6 +28,7 @@ import {
 } from "../ui/form";
 import { Switch } from "../ui/switch";
 import { cn } from "@/lib/utils";
+import { toast } from "../ui/use-toast";
 
 const type: ElementsType = "TextField";
 
@@ -181,11 +182,17 @@ function PropertiesComponent({
     updateElement(element.id, {
       ...element,
       extraAttributes: {
+        ...element.extraAttributes,
         label,
         helperText,
         placeHolder,
         required,
       },
+    });
+
+    toast({
+      title: "Success",
+      description: "Properties saved successfully",
     });
   }
 
